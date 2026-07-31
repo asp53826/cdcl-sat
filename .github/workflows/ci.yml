@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and unit test
+        run: make test
+      - name: Fetch and build drat-trim
+        run: make drat-trim
+      - name: Every UNSAT answer verified by drat-trim
+        run: make proof-test PROOF_COUNT=40
+      - name: Ablation smoke
+        run: python3 bench/ablation.py --instances 6 --vars 120 --timeout 30
+      - name: Benchmark smoke
+        run: python3 bench/benchmark.py --quick --timeout 30

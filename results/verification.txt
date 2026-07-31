@@ -1,0 +1,9 @@
+instances            300 random 3-SAT, 120 vars, ratio 3.6-5.2
+satisfiable          120
+unsatisfiable        180
+neither              0
+models verified      120 / 120 (re-read from the CNF)
+proofs verified      180 / 180 (drat-trim)
+total proof lines    108206
+agrees with CaDiCaL  300 / 300
+wall seconds         20.1
