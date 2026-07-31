@@ -1,0 +1,19 @@
+random 3-SAT at ratio 4.26, 5 instances per size, 45s timeout
+
+  vars   solved   mine (s)    conflicts  cadical (s)    ratio
+-------------------------------------------------------------
+   100    5/5         0.02        1,761        0.04     0.6x
+   150    5/5         0.07       11,614        0.16     0.5x
+   200    5/5         0.52       72,004        0.92     0.6x
+   250    5/5        10.67      776,308       12.90     0.8x
+   300    5/5        77.00    3,284,501       28.76     2.7x
+
+pigeonhole PHP(n): n+1 pigeons into n holes, unsatisfiable, no short resolution proof exists
+
+ holes    vars   clauses   mine (s)    conflicts  cadical (s)
+-------------------------------------------------------------
+     6      42       133       0.01          858        0.01
+     7      56       204       0.04        5,605        0.03
+     8      72       297       0.25       23,171        0.30
+     9      90       415       3.33      156,258        3.28
+    10     110       561    timeout            -       45.00

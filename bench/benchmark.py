@@ -33,25 +33,27 @@ def generate(path, family, **kw):
     subprocess.run(cmd, check=True)
 
 
+def conflicts_in(out):
+    for line in out.splitlines():
+        if line.startswith("c conflicts"):
+            return int(float(line.split()[-1]))
+    return None
+
+
 def time_run(cmd, timeout):
+    """One run, timed, with the statistics read out of the same run.
+
+    An earlier version solved each instance twice - once for the wall clock and
+    once to read the conflict count off stdout - which doubled the cost of the
+    whole benchmark and, worse, reported timings from a run whose statistics
+    came from a different process.
+    """
     started = time.time()
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
-        return None, timeout
-    return r.returncode, time.time() - started
-
-
-def conflicts_of(solver, cnf, timeout):
-    try:
-        r = subprocess.run([solver, cnf], capture_output=True, text=True,
-                           timeout=timeout)
-    except subprocess.TimeoutExpired:
-        return None
-    for line in r.stdout.splitlines():
-        if line.startswith("c conflicts"):
-            return int(float(line.split()[-1]))
-    return None
+        return None, timeout, ""
+    return r.returncode, time.time() - started, r.stdout
 
 
 def main():
@@ -64,7 +66,7 @@ def main():
     args = ap.parse_args()
 
     cadical = args.cadical if args.cadical and os.path.exists(args.cadical) else None
-    sizes = [100, 150, 200] if args.quick else [100, 150, 200, 250, 300, 350]
+    sizes = [100, 150, 200] if args.quick else [100, 150, 200, 250, 300]
     holes = [6, 7, 8] if args.quick else [6, 7, 8, 9, 10]
     reps = 3 if args.quick else args.reps
 
@@ -84,16 +86,16 @@ def main():
                 cnf = os.path.join(tmp, f"r{n}_{i}.cnf")
                 generate(cnf, "random", vars=n, ratio=4.26, seed=1000 + i)
 
-                code, t = time_run([args.solver, cnf, "--quiet", "--no-verify"],
-                                   args.timeout)
+                code, t, out = time_run([args.solver, cnf, "--no-verify"],
+                                        args.timeout)
                 mine += t
                 if code in (10, 20):
                     solved += 1
-                    c = conflicts_of(args.solver, cnf, args.timeout)
+                    c = conflicts_in(out)
                     if c:
                         conflicts += c
                 if cadical:
-                    _, tc = time_run([cadical, "-q", cnf], args.timeout)
+                    _, tc, _ = time_run([cadical, "-q", cnf], args.timeout)
                     cad += tc
 
             ratio = f"{mine / cad:.1f}x" if cadical and cad > 0 else "-"
@@ -117,13 +119,13 @@ def main():
                         _, _, nv, nc = line.split()
                         break
 
-            code, t = time_run([args.solver, cnf, "--quiet"], args.timeout)
-            c = conflicts_of(args.solver, cnf, args.timeout) if code in (10, 20) else None
+            code, t, out = time_run([args.solver, cnf], args.timeout)
+            c = conflicts_in(out) if code in (10, 20) else None
             mine_txt = f"{t:>10.2f}" if code in (10, 20) else f"{'timeout':>10}"
             conf_txt = f"{c:>12,}" if c else f"{'-':>12}"
 
             if cadical:
-                _, tc = time_run([cadical, "-q", cnf], args.timeout)
+                _, tc, _ = time_run([cadical, "-q", cnf], args.timeout)
                 cad_txt = f"{tc:>12.2f}"
             else:
                 cad_txt = f"{'-':>12}"

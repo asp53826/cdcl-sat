@@ -78,7 +78,29 @@ A comparison against a state-of-the-art solver tells you that you are slower. It
 does not tell you which ideas are carrying the result. So: the same instances,
 one component disabled at a time.
 
-<!--ABLATION-->
+Random 3-SAT, 200 variables, ratio 4.26, 25 instances:
+
+| configuration | conflicts | seconds | vs full |
+|---|---:|---:|---:|
+| full | 381,410 | 3.07 | 1.00x |
+| no VSIDS decay (`--var-decay 1.0`) | 799,322 | 5.94 | **1.94x** |
+| restart every 20 conflicts | 497,379 | 4.45 | 1.45x |
+| no phase saving | 403,780 | 3.73 | 1.22x |
+| no clause minimization | 453,771 | 3.70 | 1.20x |
+| restart every 50,000 conflicts | 379,551 | 3.05 | **1.00x** |
+
+All six configurations solved all 25 instances and agree on every answer.
+
+VSIDS is the component doing the work: freezing the decay doubles both the
+conflict count and the runtime. Everything else is worth 20–45%.
+
+The last row is the one I did not expect and am not going to bury. Restarting
+essentially never is *indistinguishable* from Luby restarts at this instance
+size — 379,551 conflicts against 381,410. Restarting too often clearly hurts,
+so the restart machinery is not free, but the case for having it is not visible
+in these numbers. It would take larger instances, or families with heavy-tailed
+runtimes, to show what Luby is actually for. Reporting a 1.00x on my own feature
+is more useful than picking an instance size where it wins.
 
 Conflicts is the search-quality metric; seconds is the throughput metric. They
 are reported separately because a configuration can win on one and lose on the
@@ -86,7 +108,43 @@ other, and collapsing them into a single "speedup" hides exactly that.
 
 ## Distance to a real solver
 
-<!--BENCHMARK-->
+Random 3-SAT at the phase transition, 5 instances per size, 45s timeout,
+against CaDiCaL 3.0.1. Timings exclude proof emission.
+
+| vars | solved | mine (s) | conflicts | CaDiCaL (s) | ratio |
+|---:|---:|---:|---:|---:|---:|
+| 100 | 5/5 | 0.02 | 1,761 | 0.04 | **0.6x** |
+| 150 | 5/5 | 0.07 | 11,614 | 0.16 | **0.5x** |
+| 200 | 5/5 | 0.52 | 72,004 | 0.92 | **0.6x** |
+| 250 | 5/5 | 10.67 | 776,308 | 12.90 | **0.8x** |
+| 300 | 5/5 | 77.00 | 3,284,501 | 28.76 | 2.7x |
+
+I did not expect to win any of these rows. Up to 250 variables this solver is
+faster than CaDiCaL, and the reason is not that it is better: it is that
+CaDiCaL's inprocessing does work up front that does not pay for itself on
+instances this small. Reporting it as a win would be misreading my own
+benchmark.
+
+At 300 variables the picture inverts and CaDiCaL is 2.7x ahead while my conflict
+count has gone up 4.2x. The crossover is the actual finding, and it locates the
+gap precisely: it is not constant factors in the propagation loop, it is that
+CaDiCaL is simplifying the formula as it goes and this solver is not.
+
+**Pigeonhole PHP(n)** — n+1 pigeons into n holes, unsatisfiable:
+
+| holes | vars | clauses | mine (s) | conflicts | CaDiCaL (s) |
+|---:|---:|---:|---:|---:|---:|
+| 6 | 42 | 133 | 0.01 | 858 | 0.01 |
+| 7 | 56 | 204 | 0.04 | 5,605 | 0.03 |
+| 8 | 72 | 297 | 0.25 | 23,171 | 0.30 |
+| 9 | 90 | 415 | 3.33 | 156,258 | 3.28 |
+| 10 | 110 | 561 | **timeout** | — | **timeout** |
+
+Both solvers track each other almost exactly, and both fall off the same cliff
+at n=10 on a formula with 110 variables. That is not an implementation result,
+it is Haken's theorem showing up in a table: every resolution refutation of
+PHP(n) is exponentially long, and CDCL learns by resolution. Twenty years of
+engineering buys nothing here, which is the most useful thing in this README.
 
 ## Where it loses
 
@@ -96,11 +154,12 @@ engineering fixes this family; CaDiCaL is faster here and also loses. It is in
 the benchmark because a benchmark set the approach always wins on is not
 measuring the approach.
 
-**The gap to CaDiCaL widens with instance size**, which says the difference is
-not constant factors. It is inprocessing: variable elimination, subsumption,
-vivification, probing. None of that is implemented here, and implementing it is
-most of what separates a solver you can explain from a solver you can compete
-with.
+**The gap to CaDiCaL is a cliff, not a slope.** Even at 250 variables, then
+2.7x behind at 300. Nothing about the inner loop changed between those two rows;
+what changed is that the instances got big enough for formula simplification to
+matter. Variable elimination, subsumption, vivification and probing are all
+absent here, and they are most of what separates a solver you can explain from
+one you can compete with.
 
 **Proofs are large and unbounded.** 108,206 lines for 180 small refutations.
 On hard instances DRAT files reach hundreds of megabytes and checking can cost

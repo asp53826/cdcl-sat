@@ -1,0 +1,14 @@
+random 3-SAT, 200 vars, ratio 4.26, 25 instances, 25s timeout
+
+configuration                     solved    conflicts   seconds  vs full
+------------------------------------------------------------------------
+full                              25/25     381,410.0      3.07    1.00x
+no clause minimization            25/25     453,771.0      3.70    1.20x
+no phase saving                   25/25     403,780.0      3.73    1.22x
+restart every 20 conflicts        25/25     497,379.0      4.45    1.45x
+restart every 50000 conflicts     25/25     379,551.0      3.05    1.00x
+no VSIDS decay (var-decay 1.0)    25/25     799,322.0      5.94    1.94x
+
+conflicts is the search-quality metric and seconds is the throughput metric.
+A configuration can win on one and lose on the other; that is the point of
+reporting both.
