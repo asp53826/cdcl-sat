@@ -36,8 +36,13 @@ $(TEST): tests/test_sat.cpp $(OBJECTS)
 $(DRAT): third_party/drat-trim.c | $(BUILD_DIR)
 	$(CC) -O2 -w -o $@ $<
 
+# git does not track empty directories, so third_party/ exists on a machine that
+# has already built once and not in a fresh clone. curl then fails with exit 23
+# ("failure writing output to destination"), which reads like a network problem
+# and is not one.
 third_party/drat-trim.c:
-	curl -sSL -o $@ https://raw.githubusercontent.com/marijnheule/drat-trim/master/drat-trim.c
+	mkdir -p $(@D)
+	curl -sSL --fail -o $@ https://raw.githubusercontent.com/marijnheule/drat-trim/master/drat-trim.c
 
 drat-trim: $(DRAT)
 
