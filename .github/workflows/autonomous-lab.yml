@@ -32,6 +32,17 @@ jobs:
       verification-command: >-
         make drat-trim && make proof-test PROOF_COUNT=40
 
+  claim-auditor:
+    if: github.event_name != 'pull_request_target' && github.event.schedule != '43 7 1 * *'
+    permissions:
+      contents: read
+      issues: write
+    uses: asp53826/portfolio-ops/.github/workflows/claim-auditor.yml@v1.3.0
+    with:
+      runtime: cpp
+      install-command: >-
+        make drat-trim
+
   documentation-scribe:
     if: github.event_name != 'pull_request_target' && github.event.schedule != '43 7 1 * *'
     permissions:
