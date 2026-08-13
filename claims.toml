@@ -1,0 +1,114 @@
+# Claims this repository publishes, re-checked by Claim Auditor.
+#
+# Every entry binds a sentence in the README to the command that produces its
+# number. If the sentence is edited away, or the number stops reproducing, the
+# audit fails and opens one tracked issue.
+#
+# Scope note: the timing columns are not audited. "seconds" in the ablation and
+# every column of the CaDiCaL comparison are wall-clock on an Apple M2 Pro; the
+# same ablation on a shared runner takes 4.51s where the README records 3.07s.
+# Conflict counts are audited instead, and they are the better metric anyway --
+# the README already says conflicts is the search-quality metric and seconds is
+# the throughput metric, reported separately for exactly this reason. The
+# CaDiCaL rows additionally need a solver that is not fetched by the build.
+
+[[claim]]
+id = "all-instances-decided"
+statement = "| Random 3-SAT instances solved, ratio 3.6–5.2 | **300** |"
+command = "make proof-test PROOF_COUNT=300"
+pattern = "neither\\s+([0-9]+)"
+expected = 0
+tolerance = 0
+
+[[claim]]
+id = "every-refutation-verified-by-drat-trim"
+statement = "| Unsatisfiable answers **verified by drat-trim** | **168 / 168** |"
+command = "make proof-test PROOF_COUNT=300"
+pattern = "proofs verified\\s+([0-9]+) /"
+expected = 168
+tolerance = 0
+
+[[claim]]
+id = "unsatisfiable-count"
+statement = "| Unsatisfiable answers **verified by drat-trim** | **168 / 168** |"
+command = "make proof-test PROOF_COUNT=300"
+pattern = "unsatisfiable\\s+([0-9]+)"
+expected = 168
+tolerance = 0
+
+[[claim]]
+id = "every-model-verified-against-source-cnf"
+statement = "| Satisfiable answers verified against the source CNF | **132 / 132** |"
+command = "make proof-test PROOF_COUNT=300"
+pattern = "models verified\\s+([0-9]+) /"
+expected = 132
+tolerance = 0
+
+[[claim]]
+id = "drat-proof-lines"
+statement = "| DRAT proof lines emitted and checked | 40,728 |"
+command = "make proof-test PROOF_COUNT=300"
+pattern = "total proof lines\\s+([0-9]+)"
+expected = 40728
+tolerance = 0
+
+[[claim]]
+id = "unit-test-assertions"
+statement = "| Unit-test assertions | **1,943 passed** |"
+command = "make test"
+pattern = "([0-9]+) checks, 0 failures"
+expected = 1943
+tolerance = 0
+
+# The ablation conflict counts are deterministic: same seeded instances, same
+# search. They reproduce exactly across compilers and machines, which makes them
+# the sharpest regression detector in the repository -- any change to
+# propagation, analysis or branching moves them.
+
+[[claim]]
+id = "ablation-full-conflicts"
+statement = "| full | 381,410 | 3.07 | 1.00x |"
+command = "make all && python3 bench/ablation.py --solver ./build/satsolve --instances 25 --vars 200"
+pattern = "full\\s+25/25\\s+([0-9,]+)"
+expected = 381410
+tolerance = 0
+
+[[claim]]
+id = "ablation-vsids-decay-is-the-load-bearing-component"
+statement = "| no VSIDS decay (`--var-decay 1.0`) | 799,322 | 5.94 | **1.94x** |"
+command = "make all && python3 bench/ablation.py --solver ./build/satsolve --instances 25 --vars 200"
+pattern = "no VSIDS decay \\(var-decay 1\\.0\\)\\s+25/25\\s+([0-9,]+)"
+expected = 799322
+tolerance = 0
+
+[[claim]]
+id = "restarting-never-is-indistinguishable-from-luby"
+statement = "indistinguishable* from Luby restarts at this instance size — 379,551 conflicts against 381,410."
+command = "make all && python3 bench/ablation.py --solver ./build/satsolve --instances 25 --vars 200"
+pattern = "restart every 50000 conflicts\\s+25/25\\s+([0-9,]+)"
+expected = 379551
+tolerance = 0
+
+[[claim]]
+id = "clause-minimization-is-worth-twenty-percent"
+statement = "| no clause minimization | 453,771 | 3.70 | 1.20x |"
+command = "make all && python3 bench/ablation.py --solver ./build/satsolve --instances 25 --vars 200"
+pattern = "no clause minimization\\s+25/25\\s+([0-9,]+)"
+expected = 453771
+tolerance = 0
+
+[[claim]]
+id = "phase-saving-is-worth-twenty-percent"
+statement = "| no phase saving | 403,780 | 3.73 | 1.22x |"
+command = "make all && python3 bench/ablation.py --solver ./build/satsolve --instances 25 --vars 200"
+pattern = "no phase saving\\s+25/25\\s+([0-9,]+)"
+expected = 403780
+tolerance = 0
+
+[[claim]]
+id = "restarting-too-often-hurts"
+statement = "| restart every 20 conflicts | 497,379 | 4.45 | 1.45x |"
+command = "make all && python3 bench/ablation.py --solver ./build/satsolve --instances 25 --vars 200"
+pattern = "restart every 20 conflicts\\s+25/25\\s+([0-9,]+)"
+expected = 497379
+tolerance = 0
