@@ -31,10 +31,10 @@ in this repository.
 | Check | Result |
 |---|---:|
 | Random 3-SAT instances solved, ratio 3.6–5.2 | **300** |
-| Unsatisfiable answers **verified by drat-trim** | **168 / 168** |
-| Satisfiable answers verified against the source CNF | **132 / 132** |
+| Unsatisfiable answers **verified by drat-trim** | **180 / 180** |
+| Satisfiable answers verified against the source CNF | **120 / 120** |
 | Verdicts agreeing with CaDiCaL 3.0.1 | **300 / 300** |
-| DRAT proof lines emitted and checked | 40,728 |
+| DRAT proof lines emitted and checked | 108,206 |
 | Unit-test assertions | **1,943 passed** |
 | Configurations cross-checked for identical answers | 5 × 400 instances |
 
@@ -57,8 +57,11 @@ make test
 ```
 
 ```bash
-make drat-trim && make proof-test
+make drat-trim && make proof-test PROOF_COUNT=300 PROOF_VARS=120
 ```
+
+Those are the parameters that produce the table above; bare `make proof-test`
+runs 60 instances at 90 variables and prints smaller numbers.
 
 ```bash
 make ablation                                    # 150 vars, 40 instances
@@ -171,7 +174,7 @@ matter. Variable elimination, subsumption, vivification and probing are all
 absent here, and they are most of what separates a solver you can explain from
 one you can compete with.
 
-**Proofs are large and unbounded.** 40,728 lines for 168 small refutations.
+**Proofs are large and unbounded.** 108,206 lines for 180 small refutations.
 On hard instances DRAT files reach hundreds of megabytes and checking can cost
 more than solving. The proof is written straight through with a 64 KiB buffer
 and no attempt at compression; binary DRAT and LRAT both exist and neither is

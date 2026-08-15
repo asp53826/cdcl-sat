@@ -51,7 +51,7 @@ test: $(TEST)
 
 proof-test: $(TOOL) $(DRAT)
 	python3 scripts/check_proofs.py --solver ./$(TOOL) --drat ./$(DRAT) \
-		--count $${PROOF_COUNT:-60}
+		--count $${PROOF_COUNT:-60} --vars $${PROOF_VARS:-90}
 
 benchmark: $(TOOL)
 	python3 bench/benchmark.py --solver ./$(TOOL)
